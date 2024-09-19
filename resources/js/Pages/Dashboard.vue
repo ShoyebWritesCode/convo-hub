@@ -1,14 +1,18 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
+import axios from 'axios'; // Import axios for sending messages
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
 
-
-const currentSection = ref('chats'); // Default section
-const currentChat = ref(null); // Currently open individual chat
-const currentGroup = ref(null); // Currently open group chat
+const currentSection = ref('chats');
+const currentChat = ref(null);
+const currentGroup = ref(null);
 const newMessage = ref('');
+const messages = ref([]);
 
+// Example static data for chats, users, and groups
 const chats = ref([
     { id: 1, name: 'John Doe', lastMessage: 'Hey there!' },
     { id: 2, name: 'Jane Smith', lastMessage: 'How are you?' },
@@ -26,12 +30,18 @@ const groups = ref([
 
 const sendMessage = () => {
     if (newMessage.value.trim() === '') return;
-    // Add logic to send the message
-    newMessage.value = '';
+
+    // Send message to the server
+    axios.post('/send-message', { message: newMessage.value })
+        .then(response => {
+            newMessage.value = ''; // Clear input after sending
+        })
+        .catch(error => {
+            console.error('Error sending message:', error);
+        });
 };
 
 const openChat = (chatId) => {
-    // Set dummy data for the selected chat
     currentChat.value = {
         id: chatId,
         name: chats.value.find(chat => chat.id === chatId).name,
@@ -43,7 +53,6 @@ const openChat = (chatId) => {
 };
 
 const openGroup = (groupId) => {
-    // Set dummy data for the selected group
     currentGroup.value = {
         id: groupId,
         name: groups.value.find(group => group.id === groupId).name,
@@ -53,6 +62,39 @@ const openGroup = (groupId) => {
         ],
     };
 };
+
+const receiveMessage = (message) => {
+    // Push messages to appropriate sections
+    if (currentSection.value === 'publicChat') {
+        messages.value.push(message);
+    } else if (currentChat.value) {
+        currentChat.value.messages.push(message);
+    } else if (currentGroup.value) {
+        currentGroup.value.messages.push(message);
+    }
+};
+
+onMounted(() => {
+    // Initialize Echo
+    window.Echo = new Echo({
+        broadcaster: 'pusher',
+        key: 'bc83ac2e6e45a5d63f70',
+        cluster: 'ap2',
+        encrypted: true,
+    });
+
+    // Listen for messages on the 'chat' channel
+    Echo.channel('chat')
+        .listen('MessageSent', (event) => {
+            receiveMessage(event.message);
+        });
+
+    // Optionally subscribe to a public channel if needed
+    Echo.channel('public')
+        .listen('MessageSent', (event) => {
+            receiveMessage(event.message);
+        });
+});
 </script>
 
 <template>
@@ -73,6 +115,9 @@ const openGroup = (groupId) => {
                     <button @click="currentSection = 'myGroups'"
                         :class="{ 'btn': true, 'btn-info': currentSection === 'myGroups', 'btn-secondary': currentSection !== 'myGroups' }">My
                         Groups</button>
+                    <button @click="currentSection = 'publicChat'"
+                        :class="{ 'btn': true, 'btn-info': currentSection === 'publicChat', 'btn-secondary': currentSection !== 'publicChat' }">Public
+                        Chat</button>
                 </div>
 
                 <!-- Section Content -->
@@ -85,6 +130,24 @@ const openGroup = (groupId) => {
                             <h4 class="text-lg font-semibold">{{ chat.name }}</h4>
                             <p class="text-sm text-base-content">{{ chat.lastMessage }}</p>
                             <button @click="openChat(chat.id)" class="btn btn-accent mt-2">Open Chat</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="currentSection === 'publicChat'">
+                    <div class="border-b border-base-200 mb-4">
+                        <h3 class="text-lg font-semibold text-base-content">Public Chat</h3>
+                    </div>
+                    <div class="flex flex-col space-y-4">
+                        <div v-for="message in messages" :key="message.id" class="bg-base-200 p-4 rounded-lg shadow-sm">
+                            <div class="flex items-start">
+                                <div class="bg-accent text-accent-content p-2 rounded-lg max-w-xs">
+                                    <p class="font-semibold">{{ message.user }}
+                                        <span class="text-neutral-content text-sm">{{ message.timestamp }}</span>
+                                    </p>
+                                    <p>{{ message.message }}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -116,17 +179,19 @@ const openGroup = (groupId) => {
             </div>
 
             <!-- Chat Window -->
-            <div v-if="currentChat || currentGroup" class="w-3/4 p-4 bg-base-100 flex flex-col">
+            <div v-if="currentChat || currentGroup || currentSection === 'publicChat'"
+                class="w-3/4 p-4 bg-base-100 flex flex-col">
                 <!-- Chat Header -->
                 <div class="border-b border-base-300 mb-4">
                     <h3 class="text-lg font-semibold text-base-content">
-                        {{ currentChat ? `Chat with ${currentChat.name}` : `Group Chat: ${currentGroup.name}` }}
+                        {{ currentChat ? `Chat with ${currentChat.name}` : currentGroup ? `Group Chat:
+                        ${currentGroup.name}` : 'Public Chat' }}
                     </h3>
                 </div>
 
                 <!-- Chat Messages -->
                 <div class="flex-1 overflow-y-auto bg-base-200 p-4 rounded-lg border border-base-300 mb-4">
-                    <div v-for="message in (currentChat ? currentChat.messages : currentGroup.messages)"
+                    <div v-for="message in (currentChat ? currentChat.messages : currentGroup ? currentGroup.messages : messages)"
                         :key="message.id" class="mb-4">
                         <div class="flex items-start">
                             <div class="bg-accent text-accent-content p-2 rounded-lg max-w-xs">
