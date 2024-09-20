@@ -115,13 +115,15 @@ const receiveMessage = (message) => {
                     <button @click="currentSection = 'myGroups'"
                         :class="{ 'btn': true, 'btn-info': currentSection === 'myGroups', 'btn-secondary': currentSection !== 'myGroups' }">My
                         Groups</button>
-                    <button @click="currentSection = 'publicChat'"
-                        :class="{ 'btn': true, 'btn-info': currentSection === 'publicChat', 'btn-secondary': currentSection !== 'publicChat' }">Public
-                        Chat</button>
+                    <button @click="currentSection = 'publicChat'; fetchMessages()"
+                        :class="{ 'btn': true, 'btn-info': currentSection === 'publicChat', 'btn-secondary': currentSection !== 'publicChat' }">
+                        Public Chat
+                    </button>
+
                 </div>
 
                 <!-- Section Content -->
-                <div v-if="currentSection === 'chats'">
+                <!-- <div v-if="currentSection === 'chats'">
                     <div class="border-b border-base-200 mb-4">
                         <h3 class="text-lg font-semibold text-base-content">Chats</h3>
                     </div>
@@ -132,7 +134,7 @@ const receiveMessage = (message) => {
                             <button @click="openChat(chat.id)" class="btn btn-accent mt-2">Open Chat</button>
                         </div>
                     </div>
-                </div>
+                </div> -->
 
                 <div v-if="currentSection === 'publicChat'">
                     <div class="border-b border-base-200 mb-4">
@@ -152,7 +154,7 @@ const receiveMessage = (message) => {
                     </div> -->
                 </div>
 
-                <div v-if="currentSection === 'activeUsers'">
+                <!-- <div v-if="currentSection === 'activeUsers'">
                     <div class="border-b border-base-200 mb-4">
                         <h3 class="text-lg font-semibold text-base-content">Active Users</h3>
                     </div>
@@ -162,9 +164,9 @@ const receiveMessage = (message) => {
                             <p class="text-sm text-base-content">{{ user.status }}</p>
                         </div>
                     </div>
-                </div>
+                </div> -->
 
-                <div v-if="currentSection === 'myGroups'">
+                <!-- <div v-if="currentSection === 'myGroups'">
                     <div class="border-b border-base-200 mb-4">
                         <h3 class="text-lg font-semibold text-base-content">My Groups</h3>
                     </div>
@@ -175,19 +177,18 @@ const receiveMessage = (message) => {
                             <button @click="openGroup(group.id)" class="btn btn-accent mt-2">Open Group</button>
                         </div>
                     </div>
-                </div>
+                </div> -->
             </div>
 
             <!-- Chat Window -->
-            <div v-if="currentChat || currentGroup || currentSection === 'publicChat'"
-                class="w-3/4 p-4 bg-base-100 flex flex-col">
+            <div class="w-3/4 p-4 bg-base-100 flex flex-col">
                 <!-- Chat Header -->
                 <div class="border-b border-base-300 mb-4">
                     <h3 class="text-lg font-semibold text-base-content">
-                        {{ currentChat ? `Chat with ${currentChat.name}` : currentGroup ? `Group Chat:
-                        ${currentGroup.name}` : 'Public Chat' }}
+                        <!-- {{ currentChat ? `Chat with ${currentChat.name}` : currentGroup ? `Group Chat:
+                        ${currentGroup.name}` : 'Public Chat' }} -->
+                        Public Chat
                     </h3>
-                    <h1>{{ JSON.stringify(messages, null, 2) }}</h1>
 
                 </div>
 
@@ -210,8 +211,9 @@ const receiveMessage = (message) => {
                     <div v-for="message in messages" :key="message.id" class="mb-4">
                         <div class="flex items-start">
                             <div class="bg-accent text-accent-content p-2 rounded-lg max-w-xs">
-                                <p class="font-semibold">{{ message.user }}
-                                    <span class="text-neutral-content text-sm">{{ message.timestamp }}</span>
+                                <p class="font-semibold">{{ message.user ? message.user.name : 'Unknown User' }}
+                                    <span class="text-neutral-content text-sm">{{ formatTime(message.created_at)
+                                        }}</span>
                                 </p>
                                 <p>{{ message.message }}</p>
                             </div>
@@ -235,23 +237,38 @@ const receiveMessage = (message) => {
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
+import { Head } from '@inertiajs/vue3';
+
 
 
 
 export default {
     components: {
         AuthenticatedLayout,
+        Head,
+    },
+    props: {
+        messages: Array,
     },
     data() {
         return {
-            currentSection: 'publicChat', // Assuming you already control the sections like this
-            messages: [  // Sample message data
-                { id: 1, user: 'John', message: 'Hello, world!', timestamp: '10:00 AM' },
-                { id: 2, user: 'Jane', message: 'Hi there!', timestamp: '10:05 AM' },
-            ],
+            currentSection: 'publicChat',
+            // messages: [
+
+            //     { id: 2, user: 'Jane', message: 'Hi there!', timestamp: '10:05 AM' },
+            // ],
+            newMessage: '',
+            isInitialized: false,
         };
     },
+
     mounted() {
+        console.log("Initializing Pusher...");
+        if (!this.isInitialized) {
+            console.log("Initializing Pusher...");
+            // this.fetchMessages();
+            this.isInitialized = true; // Set flag to true after fetching
+        }
         window.Pusher = Pusher;
 
         window.Echo = new Echo({
@@ -267,15 +284,51 @@ export default {
                 console.log('Message received:', e.message);
 
                 this.messages.push({
-                    id: Date.now(), // You can replace this with a real unique identifier if you have one
-                    user: 'User', // You can replace this with the actual username if available
-                    message: e.message, // The actual message content
-                    timestamp: new Date().toLocaleTimeString() // Set timestamp (you can customize the format)
+                    id: Date.now(),
+                    user: 'User',
+                    message: e.message,
+                    timestamp: new Date().toLocaleTimeString()
                 });
 
             });
-        console.log(this.messages);
-    }
+        console.log("Pusher initialized!");
+        // console.log(this.messages);
+    },
+    methods: {
+        sendMessage() {
+            if (this.newMessage.trim() === '') return;
+
+            // Send the message to the server using inertia.post
+            this.$inertia.post('/send-message', { message: this.newMessage }, {
+                onSuccess: () => {
+                    console.log('Message sent successfully!');
+                    this.newMessage = '';
+                },
+                onError: (error) => {
+                    console.error('Error sending message:', error);
+                }
+            });
+        },
+
+        fetchMessages() {
+            console.log('Fetching messages...');
+            this.$inertia.get('/public-messages', {}, {
+                onSuccess: (response) => {
+                    console.log('Response:', response);
+                },
+                onError: (error) => {
+                    console.error('Error fetching messages:', error);
+                }
+            });
+        },
+
+        formatTime(timestamp) {
+            return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+
+
+    },
 };
 
 
