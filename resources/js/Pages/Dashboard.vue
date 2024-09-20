@@ -1,4 +1,4 @@
-<script setup>
+<!-- <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue';
@@ -74,28 +74,28 @@ const receiveMessage = (message) => {
     }
 };
 
-onMounted(() => {
-    // Initialize Echo
-    window.Echo = new Echo({
-        broadcaster: 'pusher',
-        key: 'bc83ac2e6e45a5d63f70',
-        cluster: 'ap2',
-        encrypted: true,
-    });
+// onMounted(() => {
+//     // Initialize Echo
+//     window.Echo = new Echo({
+//         broadcaster: 'pusher',
+//         key: 'bc83ac2e6e45a5d63f70',
+//         cluster: 'ap2',
+//         encrypted: true,
+//     });
 
-    // Listen for messages on the 'chat' channel
-    Echo.channel('chat')
-        .listen('MessageSent', (event) => {
-            receiveMessage(event.message);
-        });
+//     // Listen for messages on the 'chat' channel
+//     Echo.channel('chat')
+//         .listen('MessageSent', (event) => {
+//             receiveMessage(event.message);
+//         });
 
-    // Optionally subscribe to a public channel if needed
-    Echo.channel('public')
-        .listen('MessageSent', (event) => {
-            receiveMessage(event.message);
-        });
-});
-</script>
+//     // Optionally subscribe to a public channel if needed
+//     Echo.channel('public')
+//         .listen('MessageSent', (event) => {
+//             receiveMessage(event.message);
+//         });
+// });
+</script> -->
 
 <template>
 
@@ -138,7 +138,7 @@ onMounted(() => {
                     <div class="border-b border-base-200 mb-4">
                         <h3 class="text-lg font-semibold text-base-content">Public Chat</h3>
                     </div>
-                    <div class="flex flex-col space-y-4">
+                    <!-- <div class="flex flex-col space-y-4">
                         <div v-for="message in messages" :key="message.id" class="bg-base-200 p-4 rounded-lg shadow-sm">
                             <div class="flex items-start">
                                 <div class="bg-accent text-accent-content p-2 rounded-lg max-w-xs">
@@ -149,7 +149,7 @@ onMounted(() => {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </div> -->
                 </div>
 
                 <div v-if="currentSection === 'activeUsers'">
@@ -187,10 +187,12 @@ onMounted(() => {
                         {{ currentChat ? `Chat with ${currentChat.name}` : currentGroup ? `Group Chat:
                         ${currentGroup.name}` : 'Public Chat' }}
                     </h3>
+                    <h1>{{ JSON.stringify(messages, null, 2) }}</h1>
+
                 </div>
 
                 <!-- Chat Messages -->
-                <div class="flex-1 overflow-y-auto bg-base-200 p-4 rounded-lg border border-base-300 mb-4">
+                <!-- <div class="flex-1 overflow-y-auto bg-base-200 p-4 rounded-lg border border-base-300 mb-4">
                     <div v-for="message in (currentChat ? currentChat.messages : currentGroup ? currentGroup.messages : messages)"
                         :key="message.id" class="mb-4">
                         <div class="flex items-start">
@@ -202,7 +204,21 @@ onMounted(() => {
                             </div>
                         </div>
                     </div>
+                </div> -->
+                <div class="flex-1 overflow-y-auto bg-base-200 p-4 rounded-lg border border-base-300 mb-4">
+                    <!-- Loop through the messages array in the data -->
+                    <div v-for="message in messages" :key="message.id" class="mb-4">
+                        <div class="flex items-start">
+                            <div class="bg-accent text-accent-content p-2 rounded-lg max-w-xs">
+                                <p class="font-semibold">{{ message.user }}
+                                    <span class="text-neutral-content text-sm">{{ message.timestamp }}</span>
+                                </p>
+                                <p>{{ message.message }}</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
+
 
                 <!-- Message Input -->
                 <div class="border-t border-base-300 pt-4">
@@ -215,6 +231,53 @@ onMounted(() => {
     </AuthenticatedLayout>
 </template>
 
-<style scoped>
-/* Optional: Add custom styles if needed */
-</style>
+<script>
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import Echo from 'laravel-echo';
+import Pusher from 'pusher-js';
+
+
+
+export default {
+    components: {
+        AuthenticatedLayout,
+    },
+    data() {
+        return {
+            currentSection: 'publicChat', // Assuming you already control the sections like this
+            messages: [  // Sample message data
+                { id: 1, user: 'John', message: 'Hello, world!', timestamp: '10:00 AM' },
+                { id: 2, user: 'Jane', message: 'Hi there!', timestamp: '10:05 AM' },
+            ],
+        };
+    },
+    mounted() {
+        window.Pusher = Pusher;
+
+        window.Echo = new Echo({
+            broadcaster: 'pusher',
+            key: 'bc83ac2e6e45a5d63f70',
+            cluster: 'ap2',
+            encrypted: true,
+        });
+
+        // Subscribe to the channel and listen for the event
+        window.Echo.channel('convo-hub')
+            .listen('.MessageSent', (e) => {
+                console.log('Message received:', e.message);
+
+                this.messages.push({
+                    id: Date.now(), // You can replace this with a real unique identifier if you have one
+                    user: 'User', // You can replace this with the actual username if available
+                    message: e.message, // The actual message content
+                    timestamp: new Date().toLocaleTimeString() // Set timestamp (you can customize the format)
+                });
+
+            });
+        console.log(this.messages);
+    }
+};
+
+
+
+</script>
