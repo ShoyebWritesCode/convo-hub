@@ -218,7 +218,15 @@ const receiveMessage = (message) => {
                                         }}</span>
                                 </p>
                                 <p>{{ message.message }}</p>
-                                <span v-if="message.user_id == UID" class="text-sm ml-1">✓</span>
+                                <p class="text-sm text-neutral-content">
+                                    <span v-if="message.seen_by !== null && JSON.parse(message.seen_by).length > 0">
+                                        Seen by: {{
+                                            (typeof message.seen_by === 'string' ? JSON.parse(message.seen_by) :
+                                                message.seen_by).join(', ')
+                                        }}
+                                    </span>
+
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -350,6 +358,17 @@ export default {
 
 
     },
+    watch: {
+        messages: {
+            deep: true, // Enables deep watching for nested properties
+            handler(newMessages) {
+                newMessages.forEach(message => {
+                    console.log(`Seen by for message ${message.id}:`, message.seen_by);
+                    this.newMessage = '';
+                });
+            }
+        }
+    }
 };
 
 
