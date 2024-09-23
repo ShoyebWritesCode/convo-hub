@@ -206,7 +206,8 @@ const receiveMessage = (message) => {
                         </div>
                     </div>
                 </div> -->
-                <div class="flex-1 overflow-y-auto bg-base-200 p-4 rounded-lg border border-base-300 mb-4">
+                <div ref="messagesContainer"
+                    class="flex-1 overflow-y-auto bg-base-200 p-4 rounded-lg border border-base-300 mb-4">
                     <div v-for="message in messages" :key="message.id" class="mb-4">
                         <div class="flex items-start"
                             :class="{ 'justify-end': message.user_id == UID, 'justify-start': message.user_id !== UID }">
@@ -220,7 +221,7 @@ const receiveMessage = (message) => {
                                 <p>{{ message.message }}</p>
                                 <p class="text-sm text-neutral-content">
                                     <span v-if="message.seen_by !== null && JSON.parse(message.seen_by).length > 0">
-                                        Seen by: {{
+                                        {{
                                             (typeof message.seen_by === 'string' ? JSON.parse(message.seen_by) :
                                                 message.seen_by).join(', ')
                                         }}
@@ -250,6 +251,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
 import { Head } from '@inertiajs/vue3';
+import { ref } from 'vue';
 
 
 
@@ -258,6 +260,7 @@ export default {
     components: {
         AuthenticatedLayout,
         Head,
+
     },
     props: {
         messages: Array,
@@ -276,6 +279,7 @@ export default {
     },
 
     mounted() {
+        this.scrollToBottom();
         console.log(this.UID);
         console.log(this.messages);
         console.log("Initializing Pusher...");
@@ -304,6 +308,7 @@ export default {
                     message: e.message,
                     created_at: e.created_at,
                 });
+                this.scrollToBottom();
                 this.seenBy();
 
             });
@@ -317,6 +322,7 @@ export default {
             // Send the message to the server using inertia.post
             this.$inertia.post('/send-message', { message: this.newMessage }, {
                 onSuccess: () => {
+
                     console.log('Message sent successfully!');
                     this.newMessage = '';
                 },
@@ -353,7 +359,13 @@ export default {
                     console.error('Error sending seen by:', error);
                 }
             });
-        }
+        },
+
+        scrollToBottom() {
+            const container = this.$refs.messagesContainer;
+            container.scrollTop = container.scrollHeight;
+            console.log("hello from bottom");
+        },
 
 
 
@@ -363,7 +375,6 @@ export default {
             deep: true, // Enables deep watching for nested properties
             handler(newMessages) {
                 newMessages.forEach(message => {
-                    console.log(`Seen by for message ${message.id}:`, message.seen_by);
                     this.newMessage = '';
                 });
             }
