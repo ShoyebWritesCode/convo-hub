@@ -221,11 +221,14 @@ const receiveMessage = (message) => {
                                 <p>{{ message.message }}</p>
                                 <p class="text-sm text-neutral-content">
                                     <span v-if="message.seen_by !== null && JSON.parse(message.seen_by).length > 0">
-                                        {{
-                                            (typeof message.seen_by === 'string' ? JSON.parse(message.seen_by) :
-                                                message.seen_by).join(', ')
-                                        }}
+                                        <template
+                                            v-for="(path, index) in (typeof message.seen_by === 'string' ? JSON.parse(message.seen_by) : message.seen_by)"
+                                            :key="index">
+                                            <img :src="path" alt="User's Profile"
+                                                class="w-4 h-4 rounded-full inline-block mr-1" />
+                                        </template>
                                     </span>
+
 
                                 </p>
                             </div>
