@@ -207,11 +207,13 @@ const receiveMessage = (message) => {
                     </div>
                 </div> -->
                 <div class="flex-1 overflow-y-auto bg-base-200 p-4 rounded-lg border border-base-300 mb-4">
-                    <!-- Loop through the messages array in the data -->
                     <div v-for="message in messages" :key="message.id" class="mb-4">
-                        <div class="flex items-start">
-                            <div class="bg-accent text-accent-content p-2 rounded-lg max-w-xs">
-                                <p class="font-semibold">{{ message.user ? message.user.name : 'Unknown User' }}
+                        <div class="flex items-start"
+                            :class="{ 'justify-end': message.user_id == UID, 'justify-start': message.user_id !== UID }">
+                            <div
+                                :class="message.user_id == UID ? 'bg-primary text-primary-content' + ' p-2 rounded-lg max-w-xs' : 'bg-accent text-accent-content' + ' p-2 rounded-lg max-w-xs'">
+                                <p class="font-semibold"> {{ message.user_id == UID ? 'You' : (message.user ?
+                                    message.user.name : message.user_name) }}
                                     <span class="text-neutral-content text-sm">{{ formatTime(message.created_at)
                                         }}</span>
                                 </p>
@@ -220,6 +222,7 @@ const receiveMessage = (message) => {
                         </div>
                     </div>
                 </div>
+
 
 
                 <!-- Message Input -->
@@ -249,6 +252,7 @@ export default {
     },
     props: {
         messages: Array,
+        UID: Number,
     },
     data() {
         return {
@@ -263,6 +267,8 @@ export default {
     },
 
     mounted() {
+        console.log(this.UID);
+        console.log(this.messages);
         console.log("Initializing Pusher...");
         if (!this.isInitialized) {
             console.log("Initializing Pusher...");
@@ -284,10 +290,10 @@ export default {
                 console.log('Message received:', e.message);
 
                 this.messages.push({
-                    id: Date.now(),
-                    user: 'User',
+                    user_id: e.user_id,
+                    user_name: e.user_name,
                     message: e.message,
-                    timestamp: new Date().toLocaleTimeString()
+                    created_at: e.created_at,
                 });
 
             });
@@ -315,6 +321,7 @@ export default {
             this.$inertia.get('/public-messages', {}, {
                 onSuccess: (response) => {
                     console.log('Response:', response);
+                    console.log('Messages:', response.messages);
                 },
                 onError: (error) => {
                     console.error('Error fetching messages:', error);
