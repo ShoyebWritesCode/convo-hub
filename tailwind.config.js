@@ -22,4 +22,10 @@ export default {
     plugins: [forms,
         daisyui,
     ],
+
+    daisyui:{
+        themes: [
+            'corporate',
+        ]
+    }
 };
