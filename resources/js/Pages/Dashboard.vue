@@ -218,6 +218,7 @@ const receiveMessage = (message) => {
                                         }}</span>
                                 </p>
                                 <p>{{ message.message }}</p>
+                                <span v-if="message.user_id == UID" class="text-sm ml-1">✓</span>
                             </div>
                         </div>
                     </div>
@@ -296,7 +297,6 @@ export default {
                     created_at: e.created_at,
                 });
 
-            });
         console.log("Pusher initialized!");
         // console.log(this.messages);
     },
