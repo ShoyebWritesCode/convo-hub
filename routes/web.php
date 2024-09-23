@@ -25,6 +25,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::post('/send-message', [MessageController::class, 'sendMessage']);
     Route::get('/public-messages', [MessageController::class, 'index']);
+    Route::post('/seen-by', [MessageController::class, 'seenBy']);
 });
 
 

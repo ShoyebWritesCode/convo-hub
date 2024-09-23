@@ -296,6 +296,7 @@ export default {
                     message: e.message,
                     created_at: e.created_at,
                 });
+                this.seenBy();
 
             });
         console.log("Pusher initialized!");
@@ -332,6 +333,18 @@ export default {
 
         formatTime(timestamp) {
             return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        },
+
+        seenBy() {
+            const user_id = this.UID;
+            this.$inertia.post('/seen-by', { user_id }, {
+                onSuccess: () => {
+                    console.log('Seen by sent successfully!');
+                },
+                onError: (error) => {
+                    console.error('Error sending seen by:', error);
+                }
+            });
         }
 
 

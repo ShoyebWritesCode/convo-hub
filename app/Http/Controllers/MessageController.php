@@ -7,6 +7,7 @@ use App\Events\MessageSent;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use App\Models\MessageHistory;
+use App\Models\User;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\JsonResponse;
@@ -38,5 +39,20 @@ class MessageController extends Controller
 
         // return redirect('/dashboard');
         // return response()->json(['message' => 'Message sent!']);
+    }
+
+    public function seenBy()
+    {
+        $user_id = Request::input('user_id');
+        $user_name = User::find($user_id)->name;
+        $message = MessageHistory::latest()->first();
+        $seen_by = $message->seen_by;
+        if ($seen_by === null) {
+            $seen_by = [$user_name];
+        } else {
+            array_push($seen_by, $user_name);
+        }
+        $message->seen_by = $seen_by;
+        $message->save();
     }
 }
