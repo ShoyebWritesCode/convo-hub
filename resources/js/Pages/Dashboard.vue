@@ -297,6 +297,7 @@ export default {
                     created_at: e.created_at,
                 });
 
+            });
         console.log("Pusher initialized!");
         // console.log(this.messages);
     },
