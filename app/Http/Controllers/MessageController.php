@@ -13,6 +13,7 @@ use Inertia\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Crypt;
 
 class MessageController extends Controller
 {
@@ -20,6 +21,11 @@ class MessageController extends Controller
     {
         $messages = MessageHistory::with('user')->get();
         $UID = Auth::user()->id;
+
+        foreach ($messages as $message) {
+            $message->message = Crypt::decryptString($message->message);
+        }
+
         return Inertia::render('Dashboard', [
             'messages' => $messages,
             'UID' => $UID
@@ -32,9 +38,10 @@ class MessageController extends Controller
         $user_name = Auth::user()->name;
         $created_at = now();
         $message = Request::input('message');
+        $encrypted_message = Crypt::encryptString($message);
         MessageHistory::create([
             'user_id' => $user_id,
-            'message' => $message,
+            'message' => $encrypted_message,
         ]);
 
         broadcast(new MessageSent($message, $user_id, $user_name, $created_at));
