@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\ProfileUpdateRequest;
+use App\Models\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -59,5 +60,44 @@ class ProfileController extends Controller
         $request->session()->regenerateToken();
 
         return Redirect::to('/');
+    }
+
+    // public function updatePicture(Request $request): RedirectResponse
+    // {
+    //     $request->validate([
+    //         'picture' => ['required', 'image'],
+    //     ]);
+
+    //     $request->user()->update([
+    //         'picture' => $request->file('picture')->store('picture'),
+    //     ]);
+
+    //     return Redirect::route('profile.edit');
+    // }
+
+
+    public function uploadProfilePicture(Request $request)
+    {
+        // dd("hi");
+        if ($request->file('profile_picture')) {
+            // Get the uploaded file
+            $file = $request->file('profile_picture');
+
+            // Create a unique file name for the image
+            $filename = time() . '-' . $file->getClientOriginalName();
+
+            // Define the destination path in the public/images directory
+            $destinationPath = public_path('images');
+
+            // Move the file to the public/images directory
+            $file->move($destinationPath, $filename);
+            // Save the path in the database
+            $id = Auth::id();
+            $user = User::find($id);
+            $user->picture = 'images/' . $filename;
+            $user->update();
+        }
+
+        return back()->with('success', 'Profile picture updated successfullyssss.');
     }
 }
