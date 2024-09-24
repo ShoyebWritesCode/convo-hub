@@ -147,6 +147,13 @@
                                             {{ reaction }}
                                         </span>
                                     </div>
+                                    <!-- Display Reactions -->
+                                    <div v-if="message.reactions && JSON.parse(message.reactions).length > 0"
+                                        class="mt-2">
+                                        <span v-for="emoji in JSON.parse(message.reactions)" :key="emoji" class="mr-2">
+                                            {{ emoji }}
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -157,10 +164,18 @@
 
 
                 <!-- Message Input -->
-                <div class="border-t border-base-300 pt-4">
-                    <input v-model="newMessage" @keyup.enter="sendMessage" class="input input-bordered w-full mb-2"
+                <div class="border-t border-base-300 pt-4 flex items-center relative">
+                    <input v-model="newMessage" @keyup.enter="sendMessage" class="input input-bordered flex-grow"
                         type="text" placeholder="Type your message..." />
-                    <button @click="sendMessage" class="btn btn-primary">Send</button>
+                    <button @click="toggleEmojiPicker" class="btn btn-secondary ml-2">😊</button>
+                    <button @click="sendMessage" class="btn btn-primary ml-2">Send</button>
+                    <div v-if="showEmojiPicker"
+                        class="absolute bottom-full right-0 mb-2 bg-white p-2 rounded-lg shadow-lg">
+                        <span v-for="reaction in emojis" :key="reaction" class="cursor-pointer text-lg mx-1"
+                            @click="addEmoji(reaction)">
+                            {{ reaction }}
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -190,9 +205,12 @@ export default {
     data() {
         return {
             currentSection: 'publicChat',
-            reactions: ['👍', '❤️', '😂'], // Emoji list
+            emojis: ['👍', '❤️', '😂', '🔥', '👏', '😢', '😮', '🎉', '😍', '🤔'],
+            reactions: ['👍', '❤️', '😂'],
             newMessage: '',
             isInitialized: false,
+            showEmojiPicker: false,
+
         };
     },
 
@@ -305,6 +323,15 @@ export default {
                     console.error('Error adding reaction:', error);
                 }
             });
+        },
+
+        toggleEmojiPicker() {
+            this.showEmojiPicker = !this.showEmojiPicker;
+            console.log(this.showEmojiPicker);
+        },
+        addEmoji(emoji) {
+            this.newMessage += emoji;
+            this.showEmojiPicker = false;
         },
 
     },
