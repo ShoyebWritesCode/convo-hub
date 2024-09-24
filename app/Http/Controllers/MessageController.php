@@ -78,4 +78,15 @@ class MessageController extends Controller
 
         return Redirect::back();
     }
+
+    public function reactToMessage()
+    {
+        $message_id = Request::input('message_id');
+        $reaction = Request::input('reaction');
+        $message = MessageHistory::find($message_id);
+        $reactions = json_decode($message->reactions, true) ?? [];
+        array_push($reactions, $reaction);
+        $message->reactions = json_encode($reactions);
+        $message->save();
+    }
 }

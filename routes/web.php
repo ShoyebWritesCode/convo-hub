@@ -27,6 +27,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/send-message', [MessageController::class, 'sendMessage']);
     Route::get('/public-messages', [MessageController::class, 'index']);
     Route::post('/seen-by', [MessageController::class, 'seenBy']);
+    Route::post('/react-to-message', [MessageController::class, 'reactToMessage']);
 });
 
 

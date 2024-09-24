@@ -1,102 +1,3 @@
-<!-- <script setup>
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head } from '@inertiajs/vue3';
-import { ref, onMounted } from 'vue';
-import axios from 'axios'; // Import axios for sending messages
-import Echo from 'laravel-echo';
-import Pusher from 'pusher-js';
-
-const currentSection = ref('chats');
-const currentChat = ref(null);
-const currentGroup = ref(null);
-const newMessage = ref('');
-const messages = ref([]);
-
-// Example static data for chats, users, and groups
-const chats = ref([
-    { id: 1, name: 'John Doe', lastMessage: 'Hey there!' },
-    { id: 2, name: 'Jane Smith', lastMessage: 'How are you?' },
-]);
-
-const activeUsers = ref([
-    { id: 1, name: 'Alice', status: 'Online' },
-    { id: 2, name: 'Bob', status: 'Away' },
-]);
-
-const groups = ref([
-    { id: 1, name: 'Developers', description: 'Group for developers' },
-    { id: 2, name: 'Designers', description: 'Group for designers' },
-]);
-
-const sendMessage = () => {
-    if (newMessage.value.trim() === '') return;
-
-    // Send message to the server
-    axios.post('/send-message', { message: newMessage.value })
-        .then(response => {
-            newMessage.value = ''; // Clear input after sending
-        })
-        .catch(error => {
-            console.error('Error sending message:', error);
-        });
-};
-
-const openChat = (chatId) => {
-    currentChat.value = {
-        id: chatId,
-        name: chats.value.find(chat => chat.id === chatId).name,
-        messages: [
-            { id: 1, user: 'John Doe', timestamp: '10:00 AM', message: 'Hello!' },
-            { id: 2, user: 'Me', timestamp: '10:05 AM', message: 'Hi there!' },
-        ],
-    };
-};
-
-const openGroup = (groupId) => {
-    currentGroup.value = {
-        id: groupId,
-        name: groups.value.find(group => group.id === groupId).name,
-        messages: [
-            { id: 1, user: 'Alice', timestamp: '09:00 AM', message: 'Welcome to the group!' },
-            { id: 2, user: 'Me', timestamp: '09:15 AM', message: 'Thanks for adding me!' },
-        ],
-    };
-};
-
-const receiveMessage = (message) => {
-    // Push messages to appropriate sections
-    if (currentSection.value === 'publicChat') {
-        messages.value.push(message);
-    } else if (currentChat.value) {
-        currentChat.value.messages.push(message);
-    } else if (currentGroup.value) {
-        currentGroup.value.messages.push(message);
-    }
-};
-
-// onMounted(() => {
-//     // Initialize Echo
-//     window.Echo = new Echo({
-//         broadcaster: 'pusher',
-//         key: 'bc83ac2e6e45a5d63f70',
-//         cluster: 'ap2',
-//         encrypted: true,
-//     });
-
-//     // Listen for messages on the 'chat' channel
-//     Echo.channel('chat')
-//         .listen('MessageSent', (event) => {
-//             receiveMessage(event.message);
-//         });
-
-//     // Optionally subscribe to a public channel if needed
-//     Echo.channel('public')
-//         .listen('MessageSent', (event) => {
-//             receiveMessage(event.message);
-//         });
-// });
-</script> -->
-
 <template>
 
     <Head title="Chat Dashboard" />
@@ -228,12 +129,29 @@ const receiveMessage = (message) => {
                                                 class="w-4 h-4 rounded-full inline-block mr-1" />
                                         </template>
                                     </span>
-
-
                                 </p>
+
+                                <!-- Plus Button for Reactions -->
+                                <div class="relative">
+                                    <button @click="toggleReactions(message.id)"
+                                        class="text-sm text-gray-400 hover:text-gray-600">
+                                        +
+                                    </button>
+
+                                    <!-- Emoji Reactions -->
+                                    <div v-if="message.showReactions"
+                                        class="absolute mt-2 bg-white p-2 rounded-lg shadow-lg">
+                                        <span v-for="reaction in reactions" :key="reaction"
+                                            class="cursor-pointer text-lg mx-1"
+                                            @click="reactToMessage(message.id, reaction)">
+                                            {{ reaction }}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
 
 
@@ -272,10 +190,7 @@ export default {
     data() {
         return {
             currentSection: 'publicChat',
-            // messages: [
-
-            //     { id: 2, user: 'Jane', message: 'Hi there!', timestamp: '10:05 AM' },
-            // ],
+            reactions: ['👍', '❤️', '😂'], // Emoji list
             newMessage: '',
             isInitialized: false,
         };
@@ -370,7 +285,27 @@ export default {
             console.log("hello from bottom");
         },
 
+        toggleReactions(messageId) {
+            this.messages = this.messages.map(message => {
+                if (message.id === messageId) {
+                    message.showReactions = !message.showReactions;
+                } else {
+                    message.showReactions = false;
+                }
+                return message;
+            });
+        },
 
+        reactToMessage(messageId, reaction) {
+            this.$inertia.post('/react-to-message', { message_id: messageId, reaction: reaction }, {
+                onSuccess: () => {
+                    console.log('Reaction added successfully!');
+                },
+                onError: (error) => {
+                    console.error('Error adding reaction:', error);
+                }
+            });
+        },
 
     },
     watch: {
