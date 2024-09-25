@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import vue from '@vitejs/plugin-vue';
 import fs from 'fs';
+import mkcert from 'vite-plugin-mkcert';
 
 export default defineConfig({
     plugins: [
@@ -17,11 +18,10 @@ export default defineConfig({
                 },
             },
         }),
+
+        mkcert(),
     ],
     server: {
-        https: {
-          key: fs.readFileSync('localhost.key'),
-          cert: fs.readFileSync('localhost.crt'),
-        },
+        https: true,
       },
 });
