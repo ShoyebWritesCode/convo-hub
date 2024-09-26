@@ -19,9 +19,9 @@ export default defineConfig({
             },
         }),
 
-        mkcert(),
+        // mkcert(),
     ],
-    server: {
-        https: true,
-      },
+    // server: {
+    //     https: true,
+    //   },
 });
