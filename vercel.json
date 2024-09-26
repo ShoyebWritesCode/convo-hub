@@ -1,13 +1,7 @@
 {
     "version": 2,
     "functions": {
-        "api/index.php": {
-            "runtime": "vercel-php@0.6.0",
-            "maxDuration": 10,
-            "env": {
-                "PHP_VERSION": "8.2.12"
-            }
-        }
+        "api/index.php": { "runtime": "vercel-php@0.6.0" }
     },
     "routes": [
         {
@@ -27,6 +21,7 @@
         "VIEW_COMPILED_PATH": "/tmp",
         "CACHE_DRIVER": "array",
         "LOG_CHANNEL": "stderr",
-        "SESSION_DRIVER": "cookie"
+        "SESSION_DRIVER": "cookie",
+        "PHP_VERSION": "8.2.12"
     }
 }
